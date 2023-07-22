@@ -13,6 +13,7 @@ import numpy as np
 import keras
 import cv2
 import pickle
+from Controller.navegadorComandos import *
 
 train_data = np.load('train_data.npy')
 train_labels = np.load('train_labels.npy')
@@ -22,11 +23,12 @@ model = keras.models.load_model('modelo_treinado.h5')
 
 
 class Navegador:
-    def __init__(self,login, userAgent, proxyUser):
+    def __init__(self,login, userAgent, proxyUser, wallet):
         proxyUser = proxyUser.split(":")
         self.login = login
         self.continuar = False
-        self.reinvestir = True
+        self.reinvestir = False
+        self.wallet = wallet
         PROXY_HOST = proxyUser[0]  # rotating proxy or host
         PROXY_PORT = proxyUser[1] # port
         PROXY_USER = proxyUser[2] # username
@@ -145,12 +147,19 @@ class Navegador:
             except:
                 pass
             sleep(1)
-            input_email = self.driver.find_element(By.NAME, 'login-email')
-            input_email.send_keys(self.login)
+
+            #Inserir o "self.login" no input de email
+            inserir_email = inserir_name_texto(self.driver, 'login-email', self.login)
+            if inserir_email == False:
+                return False
             sleep(1)
-            input_password = self.driver.find_element(By.NAME, 'password')
-            input_password.send_keys("@Luc97ari\n")
+            #Inserir a senha no input de senha
+            inserir_senha = inserir_name_texto(self.driver, 'password', "@Luc97ari\n")
+            if inserir_senha == False:
+                return False
             sleep(1)
+
+            #Verificar se o input de email está com o valor do self.login
             while True:
                 try:
                     if input_email.get_attribute('value') == self.login:
@@ -159,6 +168,8 @@ class Navegador:
                         break
                 except:
                     break
+
+            #Verificar se o login foi realizado com sucesso
             if self.driver.current_url == 'https://gemly.gg/account':
                 print("Login realizado com sucesso!")
 
@@ -174,11 +185,15 @@ class Navegador:
             except:
                 pass
             sleep(1)
-            input_email = self.driver.find_element(By.NAME, 'login-email')
-            input_email.send_keys(self.login)
+            #Inserir o "self.login" no input de email
+            inserir_email = inserir_name_texto(self.driver, 'login-email', self.login)
+            if inserir_email == False:
+                return False
             sleep(1)
-            input_password = self.driver.find_element(By.NAME, 'password')
-            input_password.send_keys("@Luc97ari\n")
+            #Inserir a senha no input de senha
+            inserir_senha = inserir_name_texto(self.driver, 'password', "@Luc97ari\n")
+            if inserir_senha == False:
+                return False
             sleep(1)
             while True:
                 try:
@@ -194,6 +209,7 @@ class Navegador:
             else:
                 return
         self.procurarAcoes()
+    
 
         
     def verBalanco(self):
@@ -218,39 +234,43 @@ class Navegador:
                 sleep(1)
         if self.reinvestir == False:
             if saldo > 63000:
-                self.driver.find_element(By.CLASS_NAME, 'mobile-trigger').click()
+
+                #mudar para a primeira aba
+                self.driver.switch_to.window(self.driver.window_handles[0])
+                
+                #Clicar no elemento que contem o name com o valor "mobile-trigger"
+                clicar_mobile_trigger = clicar_classname_sem_texto(self.driver, 'mobile-trigger')
+                if clicar_mobile_trigger == False:
+                    return False
                 sleep(1)
 
-                #procurando pelo titulo com o texto finança
-                titulos = self.driver.find_elements(By.CLASS_NAME, 'title')
-                for titulo in titulos:
-                    if titulo.text == "Finanças":
-                        titulo.click()
-                        break
-                sleep(1)
+
+                #clicar na div com o classname "title" e o texto "Finanças"
+                clicar_financas = clicar_tagname_texto_class(self.driver, 'div', 'Finanças', 'title')
+                if clicar_financas == False:
+                    return False
                 
-                #procurando pelo elemento 'a' com o data-modal='payout'
-                elementa = self.driver.find_elements(By.TAG_NAME, 'a')
-                for element in elementa:
-                                if element.get_attribute('data-modal') == 'payout':
-                                    element.click()
-                                    break
-                sleep(1)
+                #clicar na tagname a com o texto "Saque"
+                clicar_saque = clicar_tagname_texto(self.driver, 'a', 'Saque')
+                if clicar_saque == False:
+                    return False
+                sleep(3)
                 
-                #procurando pelo classname 'item' com o data-path='rub'
-                elementitem = self.driver.find_elements(By.CLASS_NAME, 'item')
-                for element in elementitem:
-                    if element.get_attribute('data-path') == 'rub':
-                        element.click()
-                        break
-                sleep(1)
+                #clicar na div com o classname "item" e o data-path="rub"
+                elemento_moedas = self.driver.find_element(By.CLASS_NAME, 'currency')
+                elementodiv = elemento_moedas.find_elements(By.TAG_NAME, 'div')
+                for elemento in elementodiv:
+                    try:
+                        if elemento.get_attribute('data-path') == 'rub' and elemento.get_attribute('class') == 'item':
+                                elemento.click()
+                                break
+                    except:pass
                 
-                #procurando pelo tagname input com o name='wallet' e trazend o value dele
-                elementinput = self.driver.find_elements(By.TAG_NAME, 'input')
-                for element in elementinput:
-                    if element.get_attribute('name') == 'wallet':
-                        wallet = element.get_attribute('value')
-                        break
+                #procurando pelo tagname input com o nome="wallet" e e setando o valor dele para self.wallet
+                inserir_wallet = inserir_tagname_atribute(self.driver, 'input', 'name', 'wallet', self.wallet)
+                if inserir_wallet == False:
+                    return False
+                sleep(1)
 
                 #procurar pelo button com o texto 'Fazer pagamento'
                 elementbutton = self.driver.find_elements(By.TAG_NAME, 'button')
@@ -262,7 +282,7 @@ class Navegador:
 
                 #salvar na ultima linha do arquivo 'pagamentos.txt' o self.login e o valor saldo
                 with open('pagamentos.txt', 'a') as f:
-                    f.write(self.login + " " + str(saldo) + " " + wallet + "\n")
+                    f.write(self.login + " " + str(saldo) + " " + self.wallet + "\n")
                 sleep(2)
                 print("Pagamento realizado com sucesso!")
         else:
