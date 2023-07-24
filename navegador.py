@@ -104,7 +104,7 @@ class Navegador:
             self.driver,
             user_agent=userAgent,
             languages=["pt-BR", "pt"],
-            vendor="Google Inc.",
+            vendor="Amazon Inc.",
             platform="Win32",
             webgl_vendor="Intel Inc.",
             renderer="Intel Iris OpenGL Engine",
@@ -176,6 +176,8 @@ class Navegador:
 
     def fazerLogin(self):
         self.driver.get("https://gemly.gg/account")
+        self.driver.delete_all_cookies()
+        self.driver.refresh()
         self.carregarCookies()
         if self.driver.current_url == 'https://gemly.gg/account':
             print("Login com Cookie realizado com sucesso!")
@@ -186,6 +188,8 @@ class Navegador:
                 pass
             sleep(1)
             #Inserir o "self.login" no input de email
+
+
             inserir_email = inserir_name_texto(self.driver, 'login-email', self.login)
             if inserir_email == False:
                 return False
@@ -195,9 +199,10 @@ class Navegador:
             if inserir_senha == False:
                 return False
             sleep(1)
+
             while True:
                 try:
-                    if input_email.get_attribute('value') == self.login:
+                    if "https://gemly.gg/auth" in self.driver.current_url:
                         sleep(3)
                     else:
                         break
