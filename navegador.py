@@ -200,7 +200,8 @@ class Navegador:
                 return False
             sleep(1)
 
-            while True:
+            contador = 0
+            while contador < 100:
                 try:
                     if "https://gemly.gg/auth" in self.driver.current_url:
                         sleep(3)
@@ -208,6 +209,7 @@ class Navegador:
                         break
                 except:
                     break
+                contador += 1
             if self.driver.current_url == 'https://gemly.gg/account':
                 print("Login realizado com sucesso!")
                 self.salvarCookies()
