@@ -240,7 +240,7 @@ class Navegador:
                 self.driver.find_element(By.CLASS_NAME, 'collect').click()
                 sleep(1)
         if self.reinvestir == False:
-            if saldo > 63000:
+            if (saldo > 63000) and (len(self.wallet) > 0):
 
                 #mudar para a primeira aba
                 self.driver.switch_to.window(self.driver.window_handles[0])
